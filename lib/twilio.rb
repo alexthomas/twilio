@@ -2,13 +2,15 @@ require "twilio/engine"
 require 'httparty'
 
 module Twilio
-  include HTTParty
   autoload :TwilioObject, '/twilio/API/TwilioObject'
   autoload :SMS, '/twilio/API/SMS'
   
+  mattr_accessor :app_root
+  @@app_root = ''
+  
   mattr_accessor :twilio_account_sid
   @@twilio_account_sid = ''
-  
+
   mattr_accessor :twilio_auth_token
   @@twilio_auth_token = ''
   
@@ -42,17 +44,17 @@ module Twilio
   end
       
   [:get, :put, :post, :delete].each do |method|
-    
-    define_method method do |path,options|
+    define_singleton_method method do |path,options|
+      Rails.logger.debug "defining #{method }method"
       options ||= {}
       api_endpoint = self.build_endpoint(path)
-      HTTParty.send(:get, api_endpoint,:query => options,:headers => Twilio.HTTP_HEADERS)
+      HTTParty.send(:get, api_endpoint,:query => options,:headers => HTTP_HEADERS)
     end
     
   end
   
   def self.build_endpoint(path)
-    url = "#{DEFAULTS[:host]}/#{API_VERSION}/Accounts/#{Twilio.twilio_account_sid}/#{path}"
+    url = "http://#{DEFAULTS[:host]}/#{API_VERSION}/Accounts/#{Twilio.twilio_account_sid}/#{path}"
     Rails.logger.debug "Twilio endpoint url #{url}"
     url
   end
