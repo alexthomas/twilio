@@ -1,13 +1,16 @@
 require "twilio/engine"
 require 'httparty'
+require "net/http"
 
 module Twilio
-  autoload :TwilioObject, '/twilio/API/TwilioObject'
-  autoload :SMS, '/twilio/API/SMS'
+  
+  require "twilio/twilio_object"
+  require "twilio/message"
+  require "twilio/errors"
   
   mattr_accessor :app_root
   @@app_root = ''
-  
+
   mattr_accessor :twilio_account_sid
   @@twilio_account_sid = ''
 
@@ -17,6 +20,11 @@ module Twilio
   mattr_accessor :twilio_app_id
   @@twilio_auth_token = ''
   
+  mattr_accessor :twilio_phone_number
+  @@twilio_phone_number = ''
+  
+  mattr_accessor :twilio_test_number
+  @@twilio_test_number = ''
   API_VERSION = '2010-04-01'
   
   HTTP_HEADERS = {
@@ -48,13 +56,54 @@ module Twilio
       Rails.logger.debug "defining #{method }method"
       options ||= {}
       api_endpoint = self.build_endpoint(path)
-      HTTParty.send(:get, api_endpoint,:query => options,:headers => HTTP_HEADERS)
-    end
+      Rails.logger.debug "path: #{path} options #{options.inspect} method: #{method}"
+      #HTTParty.send(method, api_endpoint,:query => options,:basic_auth => {:username => Twilio.twilio_account_sid, :password => Twilio.twilio_auth_token})
+      uri = URI(api_endpoint)
+      
+      req = Net::HTTP::Post.new(uri)
+      req.basic_auth Twilio.twilio_account_sid, Twilio.twilio_auth_token
+      req.set_form_data(Twilio.twilify_post_data(options))
+      
+      retries_left = DEFAULTS[:retry_limit]
+      
+      begin
+        response = Net::HTTP.start(uri.hostname, uri.port,:use_ssl => uri.scheme == 'https') {|http|
+          http.request(req)
+        
+        }
+        
+      rescue Exception
+        raise if request.class == Net::HTTP::Post        
+        if retries_left > 0 then retries_left -= 1; retry else raise end
+      end
+      
+      if response.kind_of? Net::HTTPServerError
+        raise Twilio::ServerError
+      end
+      
+      if response.kind_of? Net::HTTPClientError
+        raise Twilio::RequestError.new response.message, response.code
+      end
+      response
+     end
     
+  end
+
+  
+  def self.twilify_post_data(post_hash)
+    post_hash.keys.each do | key |
+      
+      if key.is_a? String
+        post_hash[key.capitalize] = post_hash[key]
+        post_hash.delete(key)
+      end
+    end
+    Rails.logger.debug "twilified post hash: #{post_hash.inspect}"
+    post_hash
   end
   
   def self.build_endpoint(path)
-    url = "http://#{DEFAULTS[:host]}/#{API_VERSION}/Accounts/#{Twilio.twilio_account_sid}/#{path}"
+    url = "https://#{DEFAULTS[:host]}/#{API_VERSION}/Accounts/#{Twilio.twilio_account_sid}/#{path}"
     Rails.logger.debug "Twilio endpoint url #{url}"
     url
   end
