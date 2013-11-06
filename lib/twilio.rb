@@ -52,17 +52,21 @@ module Twilio
   end
       
   [:get, :put, :post, :delete].each do |method|
-    define_singleton_method method do |path,options|
+    define_singleton_method method do |path,params|
       Rails.logger.debug "defining #{method }method"
-      options ||= {}
+      params ||= {}
       api_endpoint = self.build_endpoint(path)
-      Rails.logger.debug "path: #{path} options #{options.inspect} method: #{method}"
+      Rails.logger.debug "path: #{path} params #{params.inspect} method: #{method}"
       #HTTParty.send(method, api_endpoint,:query => options,:basic_auth => {:username => Twilio.twilio_account_sid, :password => Twilio.twilio_auth_token})
-      uri = URI(api_endpoint)
-      
-      req = Net::HTTP::Post.new(uri)
+      api_path = (method==:get && !params.empty?) ? api_endpoint << encode_uri_get_params(params) : api_endpoint
+      Rails.logger.debug "api_path #{api_path}"
+      uri = URI(api_path)
+      method_class = Net::HTTP.const_get method.to_s.capitalize
+      req = method_class.new(uri)
       req.basic_auth Twilio.twilio_account_sid, Twilio.twilio_auth_token
-      req.set_form_data(Twilio.twilify_post_data(options))
+      
+      
+      req.set_form_data(Twilio.twilify_post_data(params)) if [:put,:post].include? method
       
       retries_left = DEFAULTS[:retry_limit]
       
@@ -82,14 +86,17 @@ module Twilio
       end
       
       if response.kind_of? Net::HTTPClientError
-        raise Twilio::RequestError.new response.message, response.code
+        raise Twilio::RequestError.new "#{response.message} #{response.body}" , response.code
       end
       response
      end
     
   end
 
-  
+  def self.encode_uri_get_params(params)
+    path = "?"
+    path << params.to_a.map {|kv_pair| kv_pair.map {|v| CGI.escape v.to_s}.join('=')}.join('&')
+  end
   def self.twilify_post_data(post_hash)
     post_hash.keys.each do | key |
       

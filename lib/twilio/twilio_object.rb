@@ -29,11 +29,10 @@ module Twilio
       def self.find_by(params = {})
         return {}  if params.blank? || !params.is_a?(Hash)
         twilio_params = build_twilio_params(params)
-        twilio_params
-        # response = Twilio.get(self.path,twilio_params)
-        #         resource_list = response.map do | resource |
-        #           self.new(resource)
-        #         end
+        response = Twilio.get(self.path,twilio_params)
+          resource_list = response.map do | resource |
+          self.new(resource)
+        end
       end
       
       def self.build_twilio_params(params = {})
