@@ -17,6 +17,12 @@ module Twilio
         Twilio.post(self.path,to.options)
       end
       
+      def self.twilify_time_key(twilio_key,time_key,time_value)
+        comparator = time_key =~ /on/ ? '=' : ''
+        comparator = time_key =~ /before$/ ? "<#{comparator}" : ">#{comparator}"
+        yield "#{twilio_key.to_s.camelize}#{comparator}#{time_value.to_s}"
+      end
+      
       def find(id)
         self.new(Twilio.get("#{self.path}/#{id}"))
       end

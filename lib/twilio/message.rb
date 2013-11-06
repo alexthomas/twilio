@@ -22,9 +22,10 @@ module Twilio
       def self.build_twilio_date_param!(twilio_params)
         if !(date_keys = %w(sent_before sent_after sent_on_or_before sent_on_or_after) & twilio_params.keys).empty?
           date_key = date_keys.first
-          comparator = date_key =~ /on/ ? '=' : ''
-          comparator = date_key =~ /before$/ ? "<#{comparator}" : ">#{comparator}"
-          twilio_params[:date_sent] = "DateSent#{comparator}#{twilio_params[date_key].to_s}"
+          self.twilify_time_key :date_sent,date_key,twilio_params[date_key] do | date_sent |
+            twilio_params[:date_sent] = date_sent
+          end
+          
         end
         twilio_params
       end
