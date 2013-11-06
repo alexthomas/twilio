@@ -13,7 +13,6 @@ module Twilio
       end
       
       def self.build_twilio_params(params)
-        Rails.logger.debug "in message build twilio params"
         twilio_params = params.with_indifferent_access
         build_twilio_date_param!(twilio_params)
         twilio_params = super(twilio_params)
