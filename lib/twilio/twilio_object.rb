@@ -9,11 +9,18 @@ module Twilio
       attr_accessor :path, :options
       
       def initialize(params = {})
-        @options = params.with_indifferent_access 
+        @options = TwilioObject.twilify_parms(params) 
       end
       
-      def self.create(options = {})
-        to = self.new(options)
+      def update_attributes(params = {})
+        params.keys.each do | param |
+          params.delete(param) if !self.respond_to?("#{param}=".to_sym)
+        end
+        Twilio.post(@path,params)
+      end
+      
+      def self.create(params = {})
+        to = self.new(params)
         Twilio.post(self.path,to.options)
       end
       
@@ -34,33 +41,37 @@ module Twilio
       
       def self.find_by(params = {})
         return {}  if params.blank? || !params.is_a?(Hash)
-        twilio_params = build_twilio_params(params)
+        twilio_params = twilify_params(params)
         response = Twilio.get(self.path,twilio_params)
           resource_list = response.map do | resource |
           self.new(resource)
         end
       end
       
-      def self.build_twilio_params(params = {})
-        twilio_params = params.dup.with_indifferent_access
-        twilio_params.keys.each do | key |
-          downcase_key = key.downcase
-          underscore_key = downcase_key.underscore
-          if !self.find_params.include? underscore_key.to_sym
-            twilio_params.delete(key) 
-          else
-            if(key != downcase_key)
-              twilio_params[downcase_key] = twilio_params[key]
-              twilio_params.delete(key) 
-              key = downcase_key
-            end
-            if(key != underscore_key)
-              twilio_params[underscore_key] = twilio_params[key]; 
-              twilio_params.delete(key) 
-            end
-          end
-        end
-        twilio_params
+      def self.twilify_params(params = {})
+        twilio_params = Hash[params.dup.with_indifferent_access.map do |k,v|
+          uk = k.downcase.underscore
+          #self.find_params.include?(uk.to_sym) ? [uk,v] : next
+        end]
+        # 
+        # twilio_params.keys.each do | key |
+        #   downcase_key = key.downcase
+        #   underscore_key = downcase_key.underscore
+        #   if !self.find_params.include? underscore_key.to_sym
+        #     twilio_params.delete(key) 
+        #   else
+        #     if(key != downcase_key)
+        #       twilio_params[downcase_key] = twilio_params[key]
+        #       twilio_params.delete(key) 
+        #       key = downcase_key
+        #     end
+        #     if(key != underscore_key)
+        #       twilio_params[underscore_key] = twilio_params[key]; 
+        #       twilio_params.delete(key) 
+        #     end
+        #   end
+        # end
+        # twilio_params
       end
       
     end

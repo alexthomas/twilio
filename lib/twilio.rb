@@ -1,12 +1,15 @@
 require "twilio/engine"
 require 'httparty'
 require "net/http"
+require "builder"
 
 module Twilio
-  
+
   require "twilio/twilio_object"
-  require "twilio/message"
   require "twilio/errors"
+  require "twilio/message"
+  require "twilio/twiml"
+  
   
   mattr_accessor :app_root
   @@app_root = ''
@@ -82,7 +85,7 @@ module Twilio
       end
       
       if response.kind_of? Net::HTTPServerError
-        raise Twilio::ServerError
+        raise Twilio::ServerError.new
       end
       
       if response.kind_of? Net::HTTPClientError

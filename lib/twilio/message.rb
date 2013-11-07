@@ -4,15 +4,15 @@ module Twilio
       
       @@path = 'SMS/Messages'
       @@find_params = [:from,:to,:date_sent]
-      attr_accessor :from, :to, :body, :media_url
+      
+      attr_reader :from, :to, :body, :media_url
       
       def initialize(params = {})
-        
         @options = params
         super
       end
       
-      def self.build_twilio_params(params)
+      def self.twilify_params(params)
         twilio_params = params.with_indifferent_access
         build_twilio_date_param!(twilio_params)
         twilio_params = super(twilio_params)
