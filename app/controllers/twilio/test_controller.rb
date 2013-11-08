@@ -22,12 +22,17 @@ module Twilio
       #         res.say    'Awesome! Thanks!', :voice => 'man'
       #         res.hangup
       #       end
-      @call = Twilio::Call.create({
-        :from => "+15005550006",
-        :to => Twilio.twilio_test_number,
-        :url => "http://demo.twilio.com/docs/voice.xml",
-        :badgers => 'like unicorns'
-      })
+      # @call = Twilio::Call.create({
+      #         :from => "+15005550006",
+      #         :to => Twilio.twilio_test_number,
+      #         :url => "http://demo.twilio.com/docs/voice.xml",
+      #         :badgers => 'like unicorns'
+      #       })
+      @capability = Twilio::CapabilityToken.create \
+        account_sid:    'AC00000000000000000000000',
+        auth_token:     'XXXXXXXXXXXXXXXXXXXXXXXXX',
+        allow_incoming: 'unique_identifier_for_this_user',
+        allow_outgoing: 'your_application_sid'
     end
     
   end

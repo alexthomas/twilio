@@ -1,15 +1,17 @@
 require "twilio/engine"
-require 'httparty'
 require "net/http"
 require "builder"
+require "jwt"
 
 module Twilio
 
   require "twilio/twilio_object"
   require "twilio/errors"
-  require "twilio/message"
+  require "twilio/capability"
   require "twilio/call"
+  require "twilio/message"
   require "twilio/twiml"
+  
   
   
   mattr_accessor :app_root
