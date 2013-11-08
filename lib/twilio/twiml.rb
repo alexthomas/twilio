@@ -14,7 +14,6 @@ module Twilio
     end
     
     def self.to_hash(twiML)
-      Rails.logger.debug "twiml: #{twiML}"
       Hash.from_xml(twiML)
     end
     

@@ -59,13 +59,10 @@ module Twilio
       
   [:get, :put, :post, :delete].each do |method|
     define_singleton_method method do |path,params|
-      Rails.logger.debug "defining #{method }method"
       params ||= {}
       api_endpoint = self.build_endpoint(path)
-      Rails.logger.debug "path: #{path} params #{params.inspect} method: #{method}"
       #HTTParty.send(method, api_endpoint,:query => options,:basic_auth => {:username => Twilio.twilio_account_sid, :password => Twilio.twilio_auth_token})
       api_path = (method==:get && !params.empty?) ? api_endpoint << encode_uri_get_params(params) : api_endpoint
-      Rails.logger.debug "api_path #{api_path}"
       uri = URI(api_path)
       method_class = Net::HTTP.const_get method.to_s.capitalize
       request = method_class.new(uri)
@@ -111,14 +108,11 @@ module Twilio
         post_hash.delete(key)
       end
     end
-    Rails.logger.debug "twilified post hash: #{post_hash.inspect}"
     post_hash
   end
   
   def self.build_endpoint(path)
     url = "https://#{DEFAULTS[:host]}/#{API_VERSION}/Accounts/#{Twilio.twilio_account_sid}/#{path}"
-    Rails.logger.debug "Twilio endpoint url #{url}"
-    url
   end
   
   
