@@ -8,6 +8,7 @@ module Twilio
   require "twilio/twilio_object"
   require "twilio/errors"
   require "twilio/message"
+  require "twilio/call"
   require "twilio/twiml"
   
   
@@ -65,17 +66,17 @@ module Twilio
       Rails.logger.debug "api_path #{api_path}"
       uri = URI(api_path)
       method_class = Net::HTTP.const_get method.to_s.capitalize
-      req = method_class.new(uri)
-      req.basic_auth Twilio.twilio_account_sid, Twilio.twilio_auth_token
+      request = method_class.new(uri)
+      request.basic_auth Twilio.twilio_account_sid, Twilio.twilio_auth_token
       
       
-      req.set_form_data(Twilio.twilify_post_data(params)) if [:put,:post].include? method
+      request.set_form_data(Twilio.twilify_post_data(params)) if [:put,:post].include? method
       
       retries_left = DEFAULTS[:retry_limit]
       
       begin
         response = Net::HTTP.start(uri.hostname, uri.port,:use_ssl => uri.scheme == 'https') {|http|
-          http.request(req)
+          http.request(request)
         
         }
         

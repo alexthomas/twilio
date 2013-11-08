@@ -9,7 +9,17 @@ module Twilio
       attr_accessor :path, :options
       
       def initialize(params = {})
-        @options = TwilioObject.twilify_parms(params) 
+        params = {} unless params.is_a?(Hash)
+        @options = TwilioObject.twilify_params(params) 
+      end
+      
+      def set_object_vars_from_hash(hash)
+        object_var_hash = TwilioObject.detwilify_params(hash.with_indifferent_access[:TwilioResponse][self.klass.to_sym])
+        object_var_hash.each {|method_name,value|self.instance_variable_set("@#{method_name}", value) if self.respond_to?(method_name)}
+      end
+      
+      def klass
+        self.class.name.split("::").last
       end
       
       def update_attributes(params = {})
@@ -21,7 +31,9 @@ module Twilio
       
       def self.create(params = {})
         to = self.new(params)
-        Twilio.post(self.path,to.options)
+        response = Twilio.post(self.path,to.options)
+        to.set_object_vars_from_hash(TwiML.to_hash(response.body))
+        to
       end
       
       def self.twilify_time_key(twilio_key,time_key,time_value)
@@ -50,8 +62,9 @@ module Twilio
       
       def self.twilify_params(params = {})
         twilio_params = Hash[params.dup.with_indifferent_access.map do |k,v|
-          uk = k.downcase.underscore
+          uk = k.underscore.downcase
           #self.find_params.include?(uk.to_sym) ? [uk,v] : next
+          [uk,v]
         end]
         # 
         # twilio_params.keys.each do | key |
@@ -72,6 +85,15 @@ module Twilio
         #   end
         # end
         # twilio_params
+      end
+      
+      def self.detwilify_params(params = {})
+        twilio_params = Hash[params.dup.with_indifferent_access.map do |k,v|
+          uk = k.underscore.downcase
+          #self.find_params.include?(uk.to_sym) ? [uk,v] : next
+          [uk,v]
+        end]
+       
       end
       
     end
