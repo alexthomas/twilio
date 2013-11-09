@@ -8,6 +8,7 @@ module Twilio
         :scope => params.map { |k,v| self.respond_to?(k) ? send(k, v, params) : next }.join(' '),
         :iss   => account_sid
       }
+      Rails.logger.debug "capability token: #{payload}"
       JWT.encode(payload,auth_token)
     end
 
